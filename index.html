@@ -62,6 +62,8 @@
   }
   .datefield{width:100%;text-align:left;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;font-family:inherit;font-size:14px;color:#9aa6b8;cursor:pointer}
   .datefield.filled{color:var(--ink);font-weight:600}
+  .datefield.locked{color:var(--ink);font-weight:600;background:#f4f6fa;cursor:default}
+  .datefield.locked:hover{border-color:var(--line);box-shadow:none}
   .datefield:hover{border-color:var(--brand);box-shadow:0 0 0 3px rgba(193,18,31,.08)}
   .cal-overlay{display:none;position:fixed;inset:0;background:rgba(15,25,45,.45);z-index:100;align-items:center;justify-content:center;padding:16px}
   .cal-box{background:#fff;border-radius:18px;width:344px;max-width:100%;padding:16px 16px 18px;box-shadow:0 16px 48px rgba(0,0,0,.28)}
@@ -113,7 +115,7 @@
         <div class="hint">รูปแบบ: AG + ปี(2หลัก) + เดือน + ลำดับ เช่น AG6907001</div>
       </div>
       <div><label>วันที่ทำสัญญา</label><button type="button" class="datefield" id="btn_date" onclick="openCal('date')">เลือกวันที่</button><input type="hidden" id="date_day"><input type="hidden" id="date_month"><input type="hidden" id="date_year"></div>
-      <div><label>เขียนที่ (สถานที่ทำสัญญา)</label><input type="text" id="place" placeholder="เช่น กรุงเทพมหานคร"></div>
+      <div><label>เขียนที่ (สถานที่ทำสัญญา)</label><input type="text" id="place" placeholder="เช่น กรุงเทพมหานคร" oninput="syncProject()"></div>
     </div>
   </div>
 
@@ -154,14 +156,14 @@
           <option value="36">36 เดือน</option>
           <option value="__custom">กำหนดเอง...</option>
         </select>
-        <input type="text" id="term_months" placeholder="ระบุจำนวนเดือน" style="margin-top:6px;display:none">
+        <input type="text" id="term_months" placeholder="ระบุจำนวนเดือน" style="margin-top:6px;display:none" oninput="syncDerivedDates()">
       </div>
       <div></div>
     </div>
     <div style="margin-top:6px;font-size:12.5px;color:var(--muted);font-weight:600">วันเริ่มต้นสัญญา</div>
     <div style="margin-top:4px"><button type="button" class="datefield" id="btn_start" onclick="openCal('start')">เลือกวันที่</button><input type="hidden" id="start_day"><input type="hidden" id="start_month"><input type="hidden" id="start_year"></div>
-    <div style="margin-top:10px;font-size:12.5px;color:var(--muted);font-weight:600">วันสิ้นสุดสัญญา</div>
-    <div style="margin-top:4px"><button type="button" class="datefield" id="btn_end" onclick="openCal('end')">เลือกวันที่</button><input type="hidden" id="end_day"><input type="hidden" id="end_month"><input type="hidden" id="end_year"></div>
+    <div style="margin-top:10px;font-size:12.5px;color:var(--muted);font-weight:600">วันสิ้นสุดสัญญา (คำนวณอัตโนมัติจากระยะเวลาเช่า)</div>
+    <div style="margin-top:4px"><div class="datefield locked" id="disp_end">(อัตโนมัติ)</div><input type="hidden" id="end_day"><input type="hidden" id="end_month"><input type="hidden" id="end_year"></div>
   </div>
 
   <!-- 5 ค่าเช่า/ชำระเงิน -->
@@ -170,20 +172,20 @@
     <div class="grid">
       <div><label>ค่าเช่าต่อเดือน (ตัวเลข) บาท</label><input type="text" id="rent_num" placeholder="เช่น 15,000" oninput="updateMoneyText('rent')"></div>
       <div><label>ค่าเช่าต่อเดือน (ตัวอักษร) — แปลงอัตโนมัติ</label><div id="rent_text_view" class="moneytext">—</div><input type="hidden" id="rent_text"></div>
-      <div><label>ชำระค่าเช่าภายในวันที่ (ของทุกเดือน)</label><input type="text" id="pay_within_day" placeholder="เช่น 5" oninput="updateLateDay()"></div>
+      <div><label>ชำระค่าเช่าภายในวันที่ (ของทุกเดือน) — อัตโนมัติจากวันเริ่มสัญญา</label><input type="text" id="pay_within_day" readonly placeholder="อัตโนมัติ" style="background:#f4f6fa"></div>
       <div></div>
     </div>
-    <div style="margin-top:6px;font-size:12.5px;color:var(--muted);font-weight:600">เริ่มทำสัญญาเช่า ตั้งแต่วันที่</div>
-    <div style="margin-top:4px"><button type="button" class="datefield" id="btn_c_start" onclick="openCal('c_start')">เลือกวันที่</button><input type="hidden" id="c_start_day"><input type="hidden" id="c_start_month"><input type="hidden" id="c_start_year"></div>
-    <div style="margin-top:10px;font-size:12.5px;color:var(--muted);font-weight:600">ชำระค่าเช่างวดต่อไป ในวันที่</div>
-    <div style="margin-top:4px"><button type="button" class="datefield" id="btn_next_pay" onclick="openCal('next_pay')">เลือกวันที่</button><input type="hidden" id="next_pay_day"><input type="hidden" id="next_pay_month"><input type="hidden" id="next_pay_year"></div>
+    <div style="margin-top:6px;font-size:12.5px;color:var(--muted);font-weight:600">เริ่มทำสัญญาเช่า ตั้งแต่วันที่ (= วันเริ่มต้นสัญญา)</div>
+    <div style="margin-top:4px"><div class="datefield locked" id="disp_c_start">(อัตโนมัติ)</div><input type="hidden" id="c_start_day"><input type="hidden" id="c_start_month"><input type="hidden" id="c_start_year"></div>
+    <div style="margin-top:10px;font-size:12.5px;color:var(--muted);font-weight:600">ชำระค่าเช่างวดต่อไป ในวันที่ (อัตโนมัติ = วันเริ่ม + 1 เดือน)</div>
+    <div style="margin-top:4px"><div class="datefield locked" id="disp_next_pay">(อัตโนมัติ)</div><input type="hidden" id="next_pay_day"><input type="hidden" id="next_pay_month"><input type="hidden" id="next_pay_year"></div>
     <div class="grid three" style="margin-top:10px">
       <div><label>ธนาคาร</label><input type="text" id="bank"></div>
       <div><label>ชื่อบัญชี</label><input type="text" id="account_name"></div>
       <div><label>เลขที่บัญชี</label><input type="text" id="account_no"></div>
     </div>
     <div class="grid" style="margin-top:10px">
-      <div><label>ค่าปรับชำระล่าช้า (บาท/วัน)</label><input type="text" id="late_fee" placeholder="เช่น 200"></div>
+      <div><label>ค่าปรับชำระล่าช้า (บาท/วัน)</label><input type="text" id="late_fee" value="450" placeholder="เช่น 450"></div>
       <div><label>ถือว่าล่าช้าหากชำระเกินวันที่ (อัตโนมัติ = วันชำระ + 5)</label><input type="text" id="late_after_day" readonly placeholder="อัตโนมัติ" style="background:#f4f6fa"></div>
     </div>
   </div>
@@ -201,7 +203,7 @@
   <div class="card">
     <h2><span class="n">7</span> รายการเฟอร์นิเจอร์และเครื่องใช้ไฟฟ้า (หน้า 8)</h2>
     <div class="grid four">
-      <div class="full" style="grid-column:1/-1"><label>โครงการ</label><input type="text" id="project"></div>
+      <div class="full" style="grid-column:1/-1"><label>โครงการ (อ้างอิงจาก "เขียนที่")</label><input type="text" id="project" readonly style="background:#f4f6fa"></div>
       <div><label>เลขที่</label><input type="text" id="unit_no"></div>
       <div><label>อาคาร</label><input type="text" id="building"></div>
       <div><label>ชั้น</label><input type="text" id="floor"></div>
@@ -356,7 +358,7 @@ function saveState(){ try{ localStorage.setItem(LS, JSON.stringify(collect())); 
 function loadState(){ try{ const o=JSON.parse(localStorage.getItem(LS)||'{}'); Object.keys(o).forEach(k=>{ const el=document.getElementById(k); if(el){ if(el.type==='checkbox') el.checked=o[k]; else el.value=o[k]; } }); }catch(e){} }
 document.addEventListener('input', saveState);
 document.addEventListener('change', saveState);
-function clearForm(){ if(!confirm('ล้างข้อมูลทั้งหมดในฟอร์ม?')) return; document.querySelectorAll('input,select').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; }); document.querySelectorAll('input.qty').forEach(el=>el.value='1'); if(typeof DATE_GROUPS!=='undefined') DATE_GROUPS.forEach(updateDateDisplay); initTerm(); updateMoneyText('rent'); updateMoneyText('deposit'); updateLateDay(); PHOTO_FILES=[]; if(gEl('photoPreview')){gEl('photoPreview').innerHTML='';} if(gEl('photoInfo')){gEl('photoInfo').textContent='เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';} localStorage.removeItem(LS); issueDocNo(); setMsg('ล้างฟอร์มแล้ว · ออกเลขเอกสารใหม่'); }
+function clearForm(){ if(!confirm('ล้างข้อมูลทั้งหมดในฟอร์ม?')) return; document.querySelectorAll('input,select').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; }); document.querySelectorAll('input.qty').forEach(el=>el.value='1'); if(typeof DATE_GROUPS!=='undefined') DATE_GROUPS.forEach(updateDateDisplay); initTerm(); gEl('late_fee').value='450'; updateMoneyText('rent'); updateMoneyText('deposit'); syncProject(); syncDerivedDates(); PHOTO_FILES=[]; if(gEl('photoPreview')){gEl('photoPreview').innerHTML='';} if(gEl('photoInfo')){gEl('photoInfo').textContent='เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';} localStorage.removeItem(LS); issueDocNo(); setMsg('ล้างฟอร์มแล้ว · ออกเลขเอกสารใหม่'); }
 function setMsg(t){ document.getElementById('msg').textContent=t; }
 
 // ---- text -> PNG (uses browser Thai shaping, always correct) ----
@@ -591,7 +593,7 @@ function onTermSel(){
   const s=gEl('term_sel').value, inp=gEl('term_months');
   if(s==='__custom'){ inp.style.display=''; inp.value=''; inp.focus(); }
   else { inp.style.display='none'; inp.value=s; }
-  saveState();
+  syncDerivedDates();
 }
 function initTerm(){
   const inp=gEl('term_months'), sel=gEl('term_sel'), v=String(inp.value||'').trim();
@@ -608,7 +610,24 @@ let calGroup=null, calView=new Date(), calMode='days', calYearBase=null;
 function gEl(id){ return document.getElementById(id); }
 function pad2(n){ return (n<10?'0':'')+n; }
 function getGroupDate(g){ const d=gEl(g+'_day').value, mo=gEl(g+'_month').value, yr=gEl(g+'_year').value; if(!d||!mo||!yr) return null; const mi=THMONTHS.indexOf(mo); if(mi<0) return null; return {d:+d,m:mi+1,y:+yr}; }
-function updateDateDisplay(g){ const s=getGroupDate(g), b=gEl('btn_'+g); if(!b) return; if(s){ b.textContent=pad2(s.d)+' '+THMONTHS[s.m-1]+' '+s.y; b.classList.add('filled'); } else { b.textContent='เลือกวันที่'; b.classList.remove('filled'); } }
+function updateDateDisplay(g){ const s=getGroupDate(g), b=gEl('btn_'+g)||gEl('disp_'+g); if(!b) return; if(s){ b.textContent=pad2(s.d)+' '+THMONTHS[s.m-1]+' '+s.y; b.classList.add('filled'); } else { b.textContent=gEl('btn_'+g)?'เลือกวันที่':'(อัตโนมัติ)'; b.classList.remove('filled'); } }
+// ---- derived fields (auto from start date + term) ----
+function setGroupFromDate(g,dt){ gEl(g+'_day').value=String(dt.getDate()); gEl(g+'_month').value=THMONTHS[dt.getMonth()]; gEl(g+'_year').value=String(dt.getFullYear()+543); }
+function clearGroup(g){ gEl(g+'_day').value=''; gEl(g+'_month').value=''; gEl(g+'_year').value=''; }
+function syncDerivedDates(){
+  const s=getGroupDate('start');
+  if(!s){ ['c_start','end','next_pay'].forEach(g=>{clearGroup(g);updateDateDisplay(g);}); gEl('pay_within_day').value=''; updateLateDay(); saveState(); return; }
+  const gy=s.y-543, gm=s.m-1, gd=s.d;
+  setGroupFromDate('c_start', new Date(gy,gm,gd));
+  const np=new Date(gy,gm,gd); np.setMonth(np.getMonth()+1); setGroupFromDate('next_pay', np);
+  const term=parseInt(String(gEl('term_months').value||'').replace(/[^0-9]/g,''),10);
+  if(!isNaN(term)&&term>0){ const en=new Date(gy,gm,gd); en.setMonth(en.getMonth()+term); en.setDate(en.getDate()-1); setGroupFromDate('end', en); }
+  else clearGroup('end');
+  ['c_start','end','next_pay'].forEach(updateDateDisplay);
+  gEl('pay_within_day').value=String(gd); updateLateDay();
+  saveState();
+}
+function syncProject(){ const p=gEl('project'); if(p) p.value=gEl('place').value; saveState(); }
 function openCal(g){ calGroup=g; calMode='days'; const s=getGroupDate(g); calView = s? new Date(s.y-543,s.m-1,1) : new Date(); renderCal(); gEl('calModal').style.display='flex'; }
 function calSetMode(mode){ calMode=mode; if(mode==='years') calYearBase=calView.getFullYear()-5; renderCal(); }
 function calPickMonth(i){ calView.setDate(1); calView.setMonth(i); calMode='days'; renderCal(); }
@@ -650,14 +669,16 @@ function renderCal(){
     grid.innerHTML=h;
   }
 }
-function pickDay(d){ const y=calView.getFullYear(), m=calView.getMonth(); gEl(calGroup+'_day').value=String(d); gEl(calGroup+'_month').value=THMONTHS[m]; gEl(calGroup+'_year').value=String(y+543); updateDateDisplay(calGroup); saveState(); closeCal(); }
-function calClear(){ gEl(calGroup+'_day').value=''; gEl(calGroup+'_month').value=''; gEl(calGroup+'_year').value=''; updateDateDisplay(calGroup); saveState(); closeCal(); }
+function pickDay(d){ const y=calView.getFullYear(), m=calView.getMonth(); gEl(calGroup+'_day').value=String(d); gEl(calGroup+'_month').value=THMONTHS[m]; gEl(calGroup+'_year').value=String(y+543); updateDateDisplay(calGroup); syncDerivedDates(); closeCal(); }
+function calClear(){ gEl(calGroup+'_day').value=''; gEl(calGroup+'_month').value=''; gEl(calGroup+'_year').value=''; updateDateDisplay(calGroup); syncDerivedDates(); closeCal(); }
 gEl('calModal').addEventListener('click', function(e){ if(e.target===this) closeCal(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCal(); });
 
 loadState();
 DATE_GROUPS.forEach(updateDateDisplay);
-initTerm(); updateMoneyText('rent'); updateMoneyText('deposit'); updateLateDay();
+initTerm(); updateMoneyText('rent'); updateMoneyText('deposit');
+if(!gEl('late_fee').value.trim()) gEl('late_fee').value='450';
+syncProject(); syncDerivedDates();
 document.querySelectorAll('input.qty').forEach(el=>{ if(!el.value.trim()) el.value='1'; });
 if(!document.getElementById('doc_no').value.trim()) issueDocNo();
 saveState();
