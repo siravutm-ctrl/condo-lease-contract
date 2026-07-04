@@ -170,7 +170,7 @@
   <div class="card">
     <h2><span class="n">5</span> ค่าเช่า และการชำระเงิน</h2>
     <div class="grid">
-      <div><label>ค่าเช่าต่อเดือน (ตัวเลข) บาท</label><input type="text" id="rent_num" placeholder="เช่น 15,000" oninput="updateMoneyText('rent')"></div>
+      <div><label>ค่าเช่าต่อเดือน (ตัวเลข) บาท</label><input type="text" id="rent_num" placeholder="เช่น 15,000" oninput="updateMoneyText('rent');syncDeposit()"></div>
       <div><label>ค่าเช่าต่อเดือน (ตัวอักษร) — แปลงอัตโนมัติ</label><div id="rent_text_view" class="moneytext">—</div><input type="hidden" id="rent_text"></div>
       <div><label>ชำระค่าเช่าภายในวันที่ (ของทุกเดือน) — อัตโนมัติจากวันเริ่มสัญญา</label><input type="text" id="pay_within_day" readonly placeholder="อัตโนมัติ" style="background:#f4f6fa"></div>
       <div></div>
@@ -194,7 +194,7 @@
   <div class="card">
     <h2><span class="n">6</span> เงินประกันความเสียหาย</h2>
     <div class="grid">
-      <div><label>จำนวนเงิน (ตัวเลข) บาท</label><input type="text" id="deposit_num" placeholder="เช่น 30,000" oninput="updateMoneyText('deposit')"></div>
+      <div><label>จำนวนเงิน (ตัวเลข) บาท — อัตโนมัติ = ค่าเช่า × 2</label><input type="text" id="deposit_num" readonly placeholder="อัตโนมัติ" style="background:#f4f6fa"></div>
       <div><label>จำนวนเงิน (ตัวอักษร) — แปลงอัตโนมัติ</label><div id="deposit_text_view" class="moneytext">—</div><input type="hidden" id="deposit_text"></div>
     </div>
   </div>
@@ -290,32 +290,32 @@ const FIELDS = [
   // page 1
   ["date_day",0,361.8,153.8,41,"L"],["date_month",0,408.1,153.8,94,"L"],["date_year",0,507.4,153.8,52,"L"],
   ["place",0,363.2,182.9,196,"L"],
-  ["lessor_name",0,174.9,241.1,165,"L"],["lessor_id",0,450.8,241.1,107,"L"],
-  ["lessor_addr1",0,197.2,270.2,362,"L"],["lessor_addr2",0,144.0,299.4,199,"L"],["lessor_phone",0,416.4,299.4,142,"L"],
-  ["lessee_name",0,174.9,357.6,165,"L"],["lessee_id",0,450.8,357.6,107,"L"],
-  ["lessee_addr1",0,197.2,386.7,362,"L"],["lessee_addr2",0,144.0,415.8,199,"L"],["lessee_phone",0,416.4,415.8,142,"L"],
+  ["lessor_name",0,257.75,241.1,165,"C"],["lessor_id",0,504.3,241.1,107,"C"],
+  ["lessor_addr1",0,197.2,270.2,362,"L"],["lessor_addr2",0,144.0,299.4,199,"L"],["lessor_phone",0,487.65,299.4,142,"C"],
+  ["lessee_name",0,257.65,357.6,165,"C"],["lessee_id",0,504.3,357.6,107,"C"],
+  ["lessee_addr1",0,197.2,386.7,362,"L"],["lessee_addr2",0,144.0,415.8,199,"L"],["lessee_phone",0,487.65,415.8,142,"C"],
   ["room_no",0,222.1,474.0,286,"L"],
   ["term_months",0,246.4,616.7,26,"C"],
   ["start_day",0,364.9,616.7,36,"C"],["start_month",0,428.9,616.7,86,"C"],["start_year",0,507.5,616.7,65,"C"],
   ["end_day",0,133.9,645.8,37,"C"],["end_month",0,199.4,645.8,88,"C"],["end_year",0,279.8,645.8,67,"C"],
   ["rent_num",0,487.7,759.4,100,"C"],["rent_text",0,143.0,788.5,170,"C"],["pay_within_day",0,517.5,788.5,41,"L"],
   // page 2
-  ["c_start_day",1,236.3,145.4,35,"L"],["c_start_month",1,292.2,145.4,89,"L"],["c_start_year",1,396.4,145.4,51,"L"],
-  ["next_pay_day",1,104.5,174.5,38,"L"],["next_pay_month",1,163.0,174.5,89,"L"],["next_pay_year",1,267.0,174.5,53,"L"],
+  ["c_start_day",1,254.15,145.4,35,"C"],["c_start_month",1,336.85,145.4,89,"C"],["c_start_year",1,421.9,145.4,51,"C"],
+  ["next_pay_day",1,123.65,174.5,38,"C"],["next_pay_month",1,207.6,174.5,89,"C"],["next_pay_year",1,293.85,174.5,53,"C"],
   ["bank",1,454.1,174.6,104,"L"],
   ["account_name",1,88.1,203.6,142,"L"],["account_no",1,280.1,203.6,113,"L"],
-  ["late_fee",1,278.8,261.9,37,"L"],["late_after_day",1,94.8,291.0,31,"L"],
+  ["late_fee",1,297.5,261.9,37,"C"],["late_after_day",1,110.55,291.0,31,"C"],
   ["deposit_num",1,390.0,375.4,147,"C"],["deposit_text",1,190.0,404.5,264,"C"],
   // page 7 (index 6): notes + signature names in parentheses
   ["note1",6,74.0,486.3,484,"L"],["note2",6,74.0,512.5,485,"L"],["note3",6,74.0,538.8,484,"L"],
-  ["sig_lessor7","lessor_name",6,138.5,711.4,160,"C"],
-  ["sig_lessee7","lessee_name",6,415.0,711.4,173,"C"],
+  ["sig_lessor7","lessor_name",6,138.5,707.5,160,"C"],
+  ["sig_lessee7","lessee_name",6,415.0,707.5,173,"C"],
   // page 8 (index 7)
   ["project",7,75.1,139.3,241,"L"],
   ["unit_no",7,62.9,161.5,93,"L"],["building",7,178.5,161.5,69,"L"],["floor",7,260.2,161.5,57,"L"],
   ["bed_feet",7,140.0,303.7,18,"L"],
-  ["sig_lessor8","lessor_name",7,132.0,750.7,154,"C"],
-  ["sig_lessee8","lessee_name",7,469.0,750.7,154,"C"],
+  ["sig_lessor8","lessor_name",7,132.0,746.5,154,"C"],
+  ["sig_lessee8","lessee_name",7,469.0,746.5,154,"C"],
 ];
 
 // ---- furniture table ----
@@ -358,7 +358,7 @@ function saveState(){ try{ localStorage.setItem(LS, JSON.stringify(collect())); 
 function loadState(){ try{ const o=JSON.parse(localStorage.getItem(LS)||'{}'); Object.keys(o).forEach(k=>{ const el=document.getElementById(k); if(el){ if(el.type==='checkbox') el.checked=o[k]; else el.value=o[k]; } }); }catch(e){} }
 document.addEventListener('input', saveState);
 document.addEventListener('change', saveState);
-function clearForm(){ if(!confirm('ล้างข้อมูลทั้งหมดในฟอร์ม?')) return; document.querySelectorAll('input,select').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; }); document.querySelectorAll('input.qty').forEach(el=>el.value='1'); if(typeof DATE_GROUPS!=='undefined') DATE_GROUPS.forEach(updateDateDisplay); initTerm(); gEl('late_fee').value='450'; updateMoneyText('rent'); updateMoneyText('deposit'); syncProject(); syncDerivedDates(); PHOTO_FILES=[]; if(gEl('photoPreview')){gEl('photoPreview').innerHTML='';} if(gEl('photoInfo')){gEl('photoInfo').textContent='เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';} localStorage.removeItem(LS); issueDocNo(); setMsg('ล้างฟอร์มแล้ว · ออกเลขเอกสารใหม่'); }
+function clearForm(){ if(!confirm('ล้างข้อมูลทั้งหมดในฟอร์ม?')) return; document.querySelectorAll('input,select').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; }); document.querySelectorAll('input.qty').forEach(el=>el.value='1'); if(typeof DATE_GROUPS!=='undefined') DATE_GROUPS.forEach(updateDateDisplay); initTerm(); gEl('late_fee').value='450'; updateMoneyText('rent'); syncDeposit(); syncProject(); syncDerivedDates(); PHOTO_FILES=[]; if(gEl('photoPreview')){gEl('photoPreview').innerHTML='';} if(gEl('photoInfo')){gEl('photoInfo').textContent='เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';} localStorage.removeItem(LS); issueDocNo(); setMsg('ล้างฟอร์มแล้ว · ออกเลขเอกสารใหม่'); }
 function setMsg(t){ document.getElementById('msg').textContent=t; }
 
 // ---- text -> PNG (uses browser Thai shaping, always correct) ----
@@ -628,6 +628,7 @@ function syncDerivedDates(){
   saveState();
 }
 function syncProject(){ const p=gEl('project'); if(p) p.value=gEl('place').value; saveState(); }
+function syncDeposit(){ const r=parseFloat(String(gEl('rent_num').value||'').replace(/,/g,'').replace(/[^0-9.]/g,'')); const d=gEl('deposit_num'); d.value = isNaN(r)?'':String(Math.round(r*2)); updateMoneyText('deposit'); }
 function openCal(g){ calGroup=g; calMode='days'; const s=getGroupDate(g); calView = s? new Date(s.y-543,s.m-1,1) : new Date(); renderCal(); gEl('calModal').style.display='flex'; }
 function calSetMode(mode){ calMode=mode; if(mode==='years') calYearBase=calView.getFullYear()-5; renderCal(); }
 function calPickMonth(i){ calView.setDate(1); calView.setMonth(i); calMode='days'; renderCal(); }
@@ -676,7 +677,7 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCal(
 
 loadState();
 DATE_GROUPS.forEach(updateDateDisplay);
-initTerm(); updateMoneyText('rent'); updateMoneyText('deposit');
+initTerm(); updateMoneyText('rent'); syncDeposit();
 if(!gEl('late_fee').value.trim()) gEl('late_fee').value='450';
 syncProject(); syncDerivedDates();
 document.querySelectorAll('input.qty').forEach(el=>{ if(!el.value.trim()) el.value='1'; });
