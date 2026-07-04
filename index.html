@@ -231,9 +231,11 @@
 <div class="cal-overlay" id="calModal">
   <div class="cal-box">
     <div class="cal-head">
-      <button type="button" onclick="calNav(-1)">‹</button>
+      <button type="button" onclick="calNavYear(-1)" title="ปีก่อนหน้า">«</button>
+      <button type="button" onclick="calNav(-1)" title="เดือนก่อนหน้า">‹</button>
       <div class="cal-title" id="calTitle"></div>
-      <button type="button" onclick="calNav(1)">›</button>
+      <button type="button" onclick="calNav(1)" title="เดือนถัดไป">›</button>
+      <button type="button" onclick="calNavYear(1)" title="ปีถัดไป">»</button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-foot">
@@ -550,7 +552,8 @@ function getGroupDate(g){ const d=gEl(g+'_day').value, mo=gEl(g+'_month').value,
 function updateDateDisplay(g){ const s=getGroupDate(g), b=gEl('btn_'+g); if(!b) return; if(s){ b.textContent=pad2(s.d)+' '+THMONTHS[s.m-1]+' '+s.y; b.classList.add('filled'); } else { b.textContent='เลือกวันที่'; b.classList.remove('filled'); } }
 function openCal(g){ calGroup=g; const s=getGroupDate(g); calView = s? new Date(s.y-543,s.m-1,1) : new Date(); renderCal(); gEl('calModal').style.display='flex'; }
 function closeCal(){ gEl('calModal').style.display='none'; }
-function calNav(dir){ calView.setMonth(calView.getMonth()+dir); renderCal(); }
+function calNav(dir){ calView.setDate(1); calView.setMonth(calView.getMonth()+dir); renderCal(); }
+function calNavYear(dir){ calView.setDate(1); calView.setFullYear(calView.getFullYear()+dir); renderCal(); }
 function renderCal(){ const y=calView.getFullYear(), m=calView.getMonth(); gEl('calTitle').textContent=THMONTHS[m]+' '+(y+543); const first=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate(), sel=getGroupDate(calGroup); let h=''; THDOW.forEach(x=>h+='<div class="cal-dow">'+x+'</div>'); for(let i=0;i<first;i++) h+='<div></div>'; for(let d=1;d<=dim;d++){ const on=sel&&sel.d===d&&sel.m===m+1&&sel.y===y+543; h+='<div class="cal-day'+(on?' sel':'')+'" onclick="pickDay('+d+')">'+d+'</div>'; } gEl('calGrid').innerHTML=h; }
 function pickDay(d){ const y=calView.getFullYear(), m=calView.getMonth(); gEl(calGroup+'_day').value=String(d); gEl(calGroup+'_month').value=THMONTHS[m]; gEl(calGroup+'_year').value=String(y+543); updateDateDisplay(calGroup); saveState(); closeCal(); }
 function calClear(){ gEl(calGroup+'_day').value=''; gEl(calGroup+'_month').value=''; gEl(calGroup+'_year').value=''; updateDateDisplay(calGroup); saveState(); closeCal(); }
