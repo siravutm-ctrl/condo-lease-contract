@@ -67,7 +67,13 @@
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .cal-head button{border:none;background:#f4f6fa;width:38px;height:38px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;color:var(--ink)}
   .cal-head button:hover{background:#e7ebf3}
-  .cal-title{font-weight:700;font-size:16px}
+  .cal-title{font-weight:700;font-size:16px;display:flex;gap:8px;align-items:center}
+  .cal-lnk{cursor:pointer;padding:2px 6px;border-radius:8px}
+  .cal-lnk:hover{background:#f0e2e3;color:var(--brand)}
+  .cal-grid.cal-mg{grid-template-columns:repeat(3,1fr);gap:6px}
+  .cal-cell{text-align:center;padding:14px 4px;border-radius:10px;cursor:pointer;font-size:14.5px}
+  .cal-cell:hover{background:#eef2f8}
+  .cal-cell.sel{background:var(--brand);color:#fff;font-weight:700}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
   .cal-dow{text-align:center;font-size:12px;color:var(--muted);font-weight:700;padding:6px 0}
   .cal-day{text-align:center;padding:9px 0;border-radius:50%;cursor:pointer;font-size:14.5px}
@@ -230,13 +236,7 @@
 
 <div class="cal-overlay" id="calModal">
   <div class="cal-box">
-    <div class="cal-head">
-      <button type="button" onclick="calNavYear(-1)" title="ปีก่อนหน้า">«</button>
-      <button type="button" onclick="calNav(-1)" title="เดือนก่อนหน้า">‹</button>
-      <div class="cal-title" id="calTitle"></div>
-      <button type="button" onclick="calNav(1)" title="เดือนถัดไป">›</button>
-      <button type="button" onclick="calNavYear(1)" title="ปีถัดไป">»</button>
-    </div>
+    <div class="cal-head" id="calHead"></div>
     <div class="cal-grid" id="calGrid"></div>
     <div class="cal-foot">
       <button type="button" class="clr" onclick="calClear()">ล้างวันที่</button>
@@ -545,16 +545,52 @@ function issueDocNo(){ const el=document.getElementById('doc_no'); if(el){ el.va
 const THMONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const THDOW=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
 const DATE_GROUPS=['date','start','end','c_start','next_pay'];
-let calGroup=null, calView=new Date();
+let calGroup=null, calView=new Date(), calMode='days', calYearBase=null;
 function gEl(id){ return document.getElementById(id); }
 function pad2(n){ return (n<10?'0':'')+n; }
 function getGroupDate(g){ const d=gEl(g+'_day').value, mo=gEl(g+'_month').value, yr=gEl(g+'_year').value; if(!d||!mo||!yr) return null; const mi=THMONTHS.indexOf(mo); if(mi<0) return null; return {d:+d,m:mi+1,y:+yr}; }
 function updateDateDisplay(g){ const s=getGroupDate(g), b=gEl('btn_'+g); if(!b) return; if(s){ b.textContent=pad2(s.d)+' '+THMONTHS[s.m-1]+' '+s.y; b.classList.add('filled'); } else { b.textContent='เลือกวันที่'; b.classList.remove('filled'); } }
-function openCal(g){ calGroup=g; const s=getGroupDate(g); calView = s? new Date(s.y-543,s.m-1,1) : new Date(); renderCal(); gEl('calModal').style.display='flex'; }
+function openCal(g){ calGroup=g; calMode='days'; const s=getGroupDate(g); calView = s? new Date(s.y-543,s.m-1,1) : new Date(); renderCal(); gEl('calModal').style.display='flex'; }
+function calSetMode(mode){ calMode=mode; if(mode==='years') calYearBase=calView.getFullYear()-5; renderCal(); }
+function calPickMonth(i){ calView.setDate(1); calView.setMonth(i); calMode='days'; renderCal(); }
+function calPickYear(gy){ calView.setDate(1); calView.setFullYear(gy); calMode='days'; renderCal(); }
+function calYearPage(dir){ calYearBase+=dir*12; renderCal(); }
 function closeCal(){ gEl('calModal').style.display='none'; }
 function calNav(dir){ calView.setDate(1); calView.setMonth(calView.getMonth()+dir); renderCal(); }
 function calNavYear(dir){ calView.setDate(1); calView.setFullYear(calView.getFullYear()+dir); renderCal(); }
-function renderCal(){ const y=calView.getFullYear(), m=calView.getMonth(); gEl('calTitle').textContent=THMONTHS[m]+' '+(y+543); const first=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate(), sel=getGroupDate(calGroup); let h=''; THDOW.forEach(x=>h+='<div class="cal-dow">'+x+'</div>'); for(let i=0;i<first;i++) h+='<div></div>'; for(let d=1;d<=dim;d++){ const on=sel&&sel.d===d&&sel.m===m+1&&sel.y===y+543; h+='<div class="cal-day'+(on?' sel':'')+'" onclick="pickDay('+d+')">'+d+'</div>'; } gEl('calGrid').innerHTML=h; }
+function renderCal(){
+  const head=gEl('calHead'), grid=gEl('calGrid');
+  const y=calView.getFullYear(), m=calView.getMonth(), sel=getGroupDate(calGroup);
+  if(calMode==='days'){
+    head.innerHTML='<button type="button" onclick="calNavYear(-1)" title="ปีก่อนหน้า">«</button>'
+      +'<button type="button" onclick="calNav(-1)" title="เดือนก่อนหน้า">‹</button>'
+      +'<div class="cal-title"><span class="cal-lnk" onclick="calSetMode(\'months\')">'+THMONTHS[m]+'</span><span class="cal-lnk" onclick="calSetMode(\'years\')">'+(y+543)+'</span></div>'
+      +'<button type="button" onclick="calNav(1)" title="เดือนถัดไป">›</button>'
+      +'<button type="button" onclick="calNavYear(1)" title="ปีถัดไป">»</button>';
+    grid.className='cal-grid';
+    const first=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
+    let h=''; THDOW.forEach(x=>h+='<div class="cal-dow">'+x+'</div>');
+    for(let i=0;i<first;i++) h+='<div></div>';
+    for(let d=1;d<=dim;d++){ const on=sel&&sel.d===d&&sel.m===m+1&&sel.y===y+543; h+='<div class="cal-day'+(on?' sel':'')+'" onclick="pickDay('+d+')">'+d+'</div>'; }
+    grid.innerHTML=h;
+  } else if(calMode==='months'){
+    head.innerHTML='<button type="button" onclick="calNavYear(-1)" title="ปีก่อนหน้า">‹</button>'
+      +'<div class="cal-title"><span class="cal-lnk" onclick="calSetMode(\'years\')">'+(y+543)+'</span></div>'
+      +'<button type="button" onclick="calNavYear(1)" title="ปีถัดไป">›</button>';
+    grid.className='cal-grid cal-mg';
+    let h=''; for(let i=0;i<12;i++){ const on=(i===m&&sel&&sel.y===y+543); h+='<div class="cal-cell'+(on?' sel':'')+'" onclick="calPickMonth('+i+')">'+THMONTHS[i]+'</div>'; }
+    grid.innerHTML=h;
+  } else {
+    if(calYearBase==null) calYearBase=y-5;
+    const b=calYearBase;
+    head.innerHTML='<button type="button" onclick="calYearPage(-1)" title="ก่อนหน้า">‹</button>'
+      +'<div class="cal-title">'+(b+543)+' – '+(b+11+543)+'</div>'
+      +'<button type="button" onclick="calYearPage(1)" title="ถัดไป">›</button>';
+    grid.className='cal-grid cal-mg';
+    let h=''; for(let i=0;i<12;i++){ const gy=b+i, on=(sel&&sel.y===gy+543); h+='<div class="cal-cell'+(on?' sel':'')+'" onclick="calPickYear('+gy+')">'+(gy+543)+'</div>'; }
+    grid.innerHTML=h;
+  }
+}
 function pickDay(d){ const y=calView.getFullYear(), m=calView.getMonth(); gEl(calGroup+'_day').value=String(d); gEl(calGroup+'_month').value=THMONTHS[m]; gEl(calGroup+'_year').value=String(y+543); updateDateDisplay(calGroup); saveState(); closeCal(); }
 function calClear(){ gEl(calGroup+'_day').value=''; gEl(calGroup+'_month').value=''; gEl(calGroup+'_year').value=''; updateDateDisplay(calGroup); saveState(); closeCal(); }
 gEl('calModal').addEventListener('click', function(e){ if(e.target===this) closeCal(); });
