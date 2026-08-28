@@ -25,6 +25,10 @@
   .full{grid-column:1/-1}
   .hint{font-size:11px;color:#9aa6b8;margin-top:3px}
   .moneytext{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#f4f6fa;font-size:14px;color:var(--ink);min-height:38px;font-weight:600;display:flex;align-items:center}
+  .photo-thumb{position:relative;width:64px;height:64px}
+  .photo-thumb img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+  .photo-del{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:var(--brand);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.3);padding:0}
+  .photo-del:hover{background:#a20e19}
   table.furni{width:100%;border-collapse:collapse;font-size:13px}
   table.furni th,table.furni td{border:1px solid var(--line);padding:5px 8px}
   table.furni th{background:#fafbfd;font-size:12px;color:var(--muted);font-weight:700}
@@ -469,9 +473,19 @@ function onPhotos(){
   let files=Array.from(gEl('photos').files||[]);
   if(files.length>30){ files=files.slice(0,30); alert('แนบได้สูงสุด 30 ไฟล์ · ระบบจะใช้ 30 ไฟล์แรก'); }
   PHOTO_FILES=files;
-  gEl('photoInfo').textContent = files.length? ('เลือกแล้ว '+files.length+' ไฟล์ · จะจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป') : 'เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';
+  renderPhotoPreview();
+}
+function removePhoto(i){ PHOTO_FILES.splice(i,1); renderPhotoPreview(); }
+function renderPhotoPreview(){
+  const n=PHOTO_FILES.length;
+  gEl('photoInfo').textContent = n? ('เลือกแล้ว '+n+' ไฟล์ · จะจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป · กด × ที่รูปเพื่อลบ') : 'เลือกได้หลายไฟล์พร้อมกัน (JPG/PNG) · รูปจะถูกจัดเป็นหน้าต่อท้ายสัญญา หน้าละ 6 รูป';
   const pv=gEl('photoPreview'); pv.innerHTML='';
-  files.forEach(f=>{ const im=document.createElement('img'); im.src=URL.createObjectURL(f); im.style.cssText='width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line)'; pv.appendChild(im); });
+  PHOTO_FILES.forEach((f,i)=>{
+    const wrap=document.createElement('div'); wrap.className='photo-thumb';
+    const im=document.createElement('img'); im.src=URL.createObjectURL(f);
+    const btn=document.createElement('button'); btn.type='button'; btn.className='photo-del'; btn.textContent='×'; btn.title='ลบรูปนี้'; btn.onclick=function(){ removePhoto(i); };
+    wrap.appendChild(im); wrap.appendChild(btn); pv.appendChild(wrap);
+  });
 }
 function imgToJpeg(file,maxSide){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const im=new Image(); im.onload=()=>{ let w=im.naturalWidth,h=im.naturalHeight; const sc=Math.min(1,maxSide/Math.max(w,h)); const cw=Math.max(1,Math.round(w*sc)), ch=Math.max(1,Math.round(h*sc)); const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch; cv.getContext('2d').drawImage(im,0,0,cw,ch); URL.revokeObjectURL(url); res({url:cv.toDataURL('image/jpeg',0.85),w:w,h:h}); }; im.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('decode fail')); }; im.src=url; }); }
 async function addPhotoPages(pdf){
