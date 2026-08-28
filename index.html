@@ -415,7 +415,7 @@ async function sigCol(pdf,page,x0,role,name){
   await drawOnPage(pdf,page,'(',pL,yName,11,'L',ink);
   dotLine(page,pL+9,pR-3,yName);
   await drawOnPage(pdf,page,')',pR,yName,11,'L',ink);
-  if(name) await drawOnPage(pdf,page,name,(pL+pR)/2,yName,10.5,'C',ink);
+  if(name) await drawOnPage(pdf,page,name,(pL+pR)/2,yName-5,10.5,'C',ink);
 }
 async function drawSignatureBlock(pdf,page){
   const lsr=(fval('lessor_name')||'').trim(), lse=(fval('lessee_name')||'').trim();
